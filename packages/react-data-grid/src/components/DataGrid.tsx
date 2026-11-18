@@ -2,10 +2,14 @@ import {
   useMemo,
   useRef,
   useState,
+  type ClipboardEvent,
   type CSSProperties,
   type KeyboardEvent,
   type MouseEvent,
 } from "react";
+import { serializeSelection } from "../core/clipboard";
+import { revealColumn } from "../core/columnLayout";
+import { useColumnLayout } from "../hooks/useColumnLayout";
 import { filterRows, getNextSorting, sortRows } from "../core/processing";
 import {
   getKeyboardDestination,
@@ -64,13 +68,19 @@ export function DataGrid<T extends object>({
   onCellChange,
   enableSorting = false,
   enableFiltering = false,
+  enableClipboard = false,
+  enableColumnResize = false,
+  enableColumnPinning = true,
+  onColumnResize,
+  showColumnDividers = false,
   searchQuery = "",
   onSortChange,
   onFilterChange,
   height,
   "aria-label": label = "Data grid",
 }: DataGridProps<T>) {
-  const width = columns.reduce((total, column) => total + column.width, 0);
+  const [copyFailed, setCopyFailed] = useState(false);
+  const copyAttempt = useRef(0);
   const [sorting, setSorting] = useState<readonly SortDescriptor[]>(noSorting);
   const [filters, setFilters] = useState<readonly ColumnFilter[]>(noFilters);
   const [openFilterKey, setOpenFilterKey] = useState<string>();
@@ -109,6 +119,14 @@ export function DataGrid<T extends object>({
   const virtual =
     height !== undefined && height !== "" && height !== "auto" && rowCount > 0;
   const { containerRef, range } = useVirtualRows(virtual, rowCount, height);
+  const columnLayout = useColumnLayout(
+    columns,
+    containerRef,
+    enableColumnResize,
+    enableColumnPinning,
+    onColumnResize,
+  );
+  const { layout } = columnLayout;
   const startIndex = virtual ? range.startIndex : 0;
   const endIndex = virtual ? range.endIndex : rowCount;
   const selection = useGridSelection(
@@ -259,38 +277,70 @@ export function DataGrid<T extends object>({
       }
     : undefined;
 
+  function onCopy(event: ClipboardEvent<HTMLTableElement>) {
+    const table = event.currentTarget;
+    const range = interaction?.range;
+    if (
+      session ||
+      !range ||
+      event.target !== table ||
+      table.ownerDocument.activeElement !== table
+    )
+      return;
+    const attempt = ++copyAttempt.current;
+    const text = serializeSelection(rows, columns, order, range);
+    event.preventDefault();
+    setCopyFailed(false);
+
+    try {
+      if (event.clipboardData) {
+        event.clipboardData.setData("text/plain", text);
+        return;
+      }
+    } catch {
+      // The async API can still be available when event data is read-only.
+    }
+
+    const clipboard = table.ownerDocument.defaultView?.navigator.clipboard;
+    if (!clipboard?.writeText) {
+      setCopyFailed(true);
+      return;
+    }
+    clipboard.writeText(text).catch(() => {
+      if (attempt === copyAttempt.current) setCopyFailed(true);
+    });
+  }
+
   function revealCell(cell: CellPosition) {
     const container = containerRef.current;
     if (!container) return;
 
-    if (!virtual) {
+    const entry = layout.byIndex[cell.columnIndex];
+    if (!entry) return;
+    const scrollLeft = container.scrollLeft;
+    if (virtual) {
+      const viewport = container.clientHeight - HEADER_HEIGHT;
+      const top = cell.rowIndex * ROW_HEIGHT;
+      const bottom = top + ROW_HEIGHT;
+      if (top < container.scrollTop) container.scrollTop = top;
+      else if (viewport > 0 && bottom > container.scrollTop + viewport) {
+        container.scrollTop = viewport < ROW_HEIGHT ? top : bottom - viewport;
+      }
+    } else {
       const row = selection.tableRef.current?.tBodies[0]?.rows[cell.rowIndex];
-      row?.cells[cell.columnIndex]?.scrollIntoView?.({
+      row?.cells[entry.visualIndex]?.scrollIntoView?.({
         block: "nearest",
         inline: "nearest",
       });
-      return;
+      if (!layout.leftWidth && !layout.rightWidth) return;
     }
-
-    const viewport = container.clientHeight - HEADER_HEIGHT;
-    const top = cell.rowIndex * ROW_HEIGHT;
-    const bottom = top + ROW_HEIGHT;
-    if (top < container.scrollTop) container.scrollTop = top;
-    else if (viewport > 0 && bottom > container.scrollTop + viewport) {
-      container.scrollTop = viewport < ROW_HEIGHT ? top : bottom - viewport;
-    }
-
-    let left = 0;
-    for (let index = 0; index < cell.columnIndex; index++)
-      left += columns[index].width;
-    const right = left + columns[cell.columnIndex].width;
-    if (
-      left < container.scrollLeft ||
-      columns[cell.columnIndex].width > container.clientWidth
-    )
-      container.scrollLeft = left;
-    else if (right > container.scrollLeft + container.clientWidth)
-      container.scrollLeft = right - container.clientWidth;
+    container.scrollLeft = revealColumn(
+      entry,
+      scrollLeft,
+      container.clientWidth,
+      layout.leftWidth,
+      layout.rightWidth,
+    );
   }
 
   const renderedRows = [];
@@ -302,7 +352,7 @@ export function DataGrid<T extends object>({
       <GridRow
         key={`${typeof key}:${key}`}
         row={row}
-        columns={columns}
+        columns={layout.ordered}
         index={index}
         interaction={interaction}
         editor={
@@ -369,15 +419,19 @@ export function DataGrid<T extends object>({
         ref={containerRef}
         className={`adg-root${virtual ? " adg-virtual" : ""}${className ? ` ${className}` : ""}`}
         style={virtual ? { ...fixedHeights, height } : { height }}
+        data-resizing={columnLayout.resizing || undefined}
       >
         <table
           ref={selection.tableRef}
-          className="adg-table"
+          className={
+            showColumnDividers ? "adg-table adg-column-dividers" : "adg-table"
+          }
           role={enableSelection ? "grid" : undefined}
           tabIndex={enableSelection && rowCount > 0 ? 0 : undefined}
           aria-activedescendant={activeId}
           aria-multiselectable={enableSelection ? true : undefined}
           onClick={enableSelection && !session ? selection.onClick : undefined}
+          onCopy={enableSelection && enableClipboard ? onCopy : undefined}
           onDoubleClick={editingEnabled ? onDoubleClick : undefined}
           onFocus={
             enableSelection && !session
@@ -398,17 +452,21 @@ export function DataGrid<T extends object>({
           aria-rowcount={
             virtual || enableSelection || order ? rowCount + 1 : undefined
           }
-          style={{ width }}
+          style={{ width: layout.width }}
         >
           <colgroup>
-            {columns.map((column) => (
-              <col key={column.key} style={{ width: column.width }} />
+            {layout.ordered.map(({ column, width }) => (
+              <col key={column.key} style={{ width }} />
             ))}
           </colgroup>
           <GridHeader
-            columns={columns}
+            columns={layout.ordered}
             sorting={activeSorting}
             filters={activeFilters}
+            onResizeStart={
+              enableColumnResize ? columnLayout.startResize : undefined
+            }
+            onResizeBy={enableColumnResize ? columnLayout.resizeBy : undefined}
             onSort={enableSorting ? handleSort : undefined}
             onFilter={enableFiltering ? handleFilter : undefined}
             filterPanel={
@@ -439,6 +497,11 @@ export function DataGrid<T extends object>({
           </p>
         )}
       </div>
+      {enableClipboard && copyFailed && (
+        <p className="adg-edit-error" role="alert">
+          Could not copy the selected cells.
+        </p>
+      )}
       {editing.error && (
         <p className="adg-edit-error" id={errorId} role="alert">
           {editing.error}

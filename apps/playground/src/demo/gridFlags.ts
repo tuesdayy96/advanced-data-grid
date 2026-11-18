@@ -21,6 +21,14 @@ export const gridFlags = [
   },
   { prop: "enableSorting", label: "Column sorting", defaultValue: true },
   { prop: "enableFiltering", label: "Column filtering", defaultValue: true },
+  { prop: "showColumnDividers", label: "Column dividers", defaultValue: false },
+  { prop: "enableClipboard", label: "Copy selected cells", defaultValue: true },
+  { prop: "enableColumnResize", label: "Column resizing", defaultValue: true },
+  {
+    prop: "enableColumnPinning",
+    label: "Pin columns on both sides",
+    defaultValue: false,
+  },
 ] as const satisfies readonly {
   prop: BooleanGridProp;
   label: string;

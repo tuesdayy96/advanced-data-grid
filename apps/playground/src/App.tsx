@@ -239,6 +239,23 @@ export function App() {
               Escape to cancel.
             </p>
           )}
+          {flags.enableSelection && flags.enableClipboard && (
+            <p className="mt-2 text-sm text-slate-600">
+              Select cells and press Ctrl+C or Cmd+C. Paste the copied text into
+              a spreadsheet.
+            </p>
+          )}
+          {flags.enableColumnResize && (
+            <p className="mt-2 text-sm text-slate-600">
+              Drag a header's resize handle or focus it and press Left or Right.
+            </p>
+          )}
+          {flags.enableColumnPinning && (
+            <p className="mt-2 text-sm text-slate-600">
+              ID and Name are pinned left. Status and Created at are pinned
+              right when the grid is wide enough.
+            </p>
+          )}
           {lastChange && (
             <p role="status" className="mt-2 text-sm text-slate-700">
               Row {lastChange.rowKey} / {lastChange.columnKey}:{" "}

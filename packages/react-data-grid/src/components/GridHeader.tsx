@@ -1,5 +1,6 @@
-import type { MouseEvent } from "react";
-import type { ColumnDef, ColumnFilter, SortDescriptor } from "../types/grid";
+import type { MouseEvent, PointerEvent } from "react";
+import type { LayoutColumn } from "../core/columnLayout";
+import type { ColumnFilter, SortDescriptor } from "../types/grid";
 
 export function GridHeader<T>({
   columns,
@@ -9,8 +10,15 @@ export function GridHeader<T>({
   onSort,
   onFilter,
   filterPanel,
+  onResizeStart,
+  onResizeBy,
 }: {
-  columns: readonly ColumnDef<T>[];
+  columns: readonly LayoutColumn<T>[];
+  onResizeStart?: (
+    event: PointerEvent<HTMLButtonElement>,
+    entry: LayoutColumn<T>,
+  ) => void;
+  onResizeBy?: (entry: LayoutColumn<T>, delta: number) => void;
   rowIndex?: number;
   sorting?: readonly SortDescriptor[];
   filters?: readonly ColumnFilter[];
@@ -21,7 +29,9 @@ export function GridHeader<T>({
   return (
     <thead>
       <tr aria-rowindex={rowIndex}>
-        {columns.map((column) => {
+        {columns.map((entry) => {
+          const { column, pin, offset, boundary } = entry;
+          const resizable = onResizeStart && column.resizable !== false;
           const sorted =
             sorting?.findIndex(({ columnKey }) => columnKey === column.key) ??
             -1;
@@ -37,6 +47,10 @@ export function GridHeader<T>({
               scope="col"
               key={column.key}
               title={column.header}
+              data-pin={pin}
+              data-pin-boundary={boundary || undefined}
+              data-resizable={resizable || undefined}
+              style={pin ? { [pin]: offset } : undefined}
               aria-sort={
                 sorted === 0
                   ? sort?.direction === "asc"
@@ -93,6 +107,21 @@ export function GridHeader<T>({
                 </div>
               ) : (
                 column.header
+              )}
+              {resizable && (
+                <button
+                  type="button"
+                  className="adg-resize-handle"
+                  aria-label={`Resize ${column.header}`}
+                  onPointerDown={(event) => onResizeStart(event, entry)}
+                  onClick={(event) => event.stopPropagation()}
+                  onKeyDown={(event) => {
+                    if (event.key !== "ArrowLeft" && event.key !== "ArrowRight")
+                      return;
+                    event.preventDefault();
+                    onResizeBy?.(entry, event.key === "ArrowLeft" ? -8 : 8);
+                  }}
+                />
               )}
             </th>
           );

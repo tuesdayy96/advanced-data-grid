@@ -6,7 +6,7 @@ import {
   type getSelectionRange,
 } from "../core/selection";
 import { getCellId } from "../hooks/useGridSelection";
-import type { ColumnDef } from "../types/grid";
+import type { LayoutColumn } from "../core/columnLayout";
 import { GridCell } from "./GridCell";
 
 export function GridRow<T>({
@@ -18,7 +18,7 @@ export function GridRow<T>({
   editor,
 }: {
   row: T;
-  columns: readonly ColumnDef<T>[];
+  columns: readonly LayoutColumn<T>[];
   rowIndex?: number;
   index: number;
   editor?: { columnIndex: number; content: ReactNode };
@@ -30,13 +30,17 @@ export function GridRow<T>({
 }) {
   return (
     <tr aria-rowindex={rowIndex} data-adg-row={interaction ? index : undefined}>
-      {columns.map((column, columnIndex) => {
+      {columns.map(({ column, index: columnIndex, pin, offset, boundary }) => {
         const cell = { rowIndex: index, columnIndex };
         return (
           <GridCell
             key={column.key}
             row={row}
             column={column}
+            logicalIndex={interaction ? columnIndex : undefined}
+            pin={pin}
+            offset={offset}
+            boundary={boundary}
             editor={
               editor?.columnIndex === columnIndex ? editor.content : undefined
             }

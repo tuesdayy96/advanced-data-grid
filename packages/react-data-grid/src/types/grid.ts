@@ -6,6 +6,8 @@ type RowKeyField<T> = {
   [K in keyof T]-?: T[K] extends RowKey ? K : never;
 }[keyof T];
 
+export type ColumnPin = "left" | "right";
+
 export type SortDirection = "asc" | "desc";
 export type SortDescriptor = { columnKey: string; direction: SortDirection };
 export type ColumnFilter = { columnKey: string } & (
@@ -26,6 +28,10 @@ export type FilterOperator = ColumnFilter["operator"];
 export type ColumnDef<T> = {
   header: string;
   width: number;
+  minWidth?: number;
+  maxWidth?: number;
+  resizable?: boolean;
+  pinned?: ColumnPin;
   sortable?: boolean;
   sortAccessor?: (row: T) => unknown;
   filterable?: boolean;
@@ -60,6 +66,11 @@ export interface DataGridProps<T extends object> {
   enableEditing?: boolean;
   enableSorting?: boolean;
   enableFiltering?: boolean;
+  showColumnDividers?: boolean;
+  enableClipboard?: boolean;
+  enableColumnResize?: boolean;
+  enableColumnPinning?: boolean;
+  onColumnResize?: (columnKey: string, width: number) => void;
   searchQuery?: string;
   onSortChange?: (sorting: readonly SortDescriptor[]) => void;
   onFilterChange?: (filters: readonly ColumnFilter[]) => void;

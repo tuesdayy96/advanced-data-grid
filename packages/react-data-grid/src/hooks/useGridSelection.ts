@@ -27,7 +27,13 @@ export function getCellPosition(
   const row = cell?.parentElement?.dataset.adgRow;
   if (!cell || row === undefined || cell.closest("table") !== table)
     return null;
-  return { rowIndex: Number(row), columnIndex: cell.cellIndex };
+  return {
+    rowIndex: Number(row),
+    columnIndex:
+      cell.dataset.adgColumn === undefined
+        ? cell.cellIndex
+        : Number(cell.dataset.adgColumn),
+  };
 }
 
 export function getCellId(
