@@ -1,4 +1,12 @@
-import type { CSSProperties, KeyboardEvent, MouseEvent } from "react";
+import {
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type KeyboardEvent,
+  type MouseEvent,
+} from "react";
+import { filterRows, getNextSorting, sortRows } from "../core/processing";
 import {
   getKeyboardDestination,
   getSelectionRange,
@@ -13,10 +21,18 @@ import {
 } from "../hooks/useGridSelection";
 import { HEADER_HEIGHT, ROW_HEIGHT } from "../core/virtualization";
 import { useVirtualRows } from "../hooks/useVirtualRows";
-import type { DataGridProps } from "../types/grid";
+import type {
+  ColumnFilter,
+  DataGridProps,
+  SortDescriptor,
+} from "../types/grid";
+import { FilterPanel } from "./FilterPanel";
 import { CellEditor } from "./editors/CellEditor";
 import { GridHeader } from "./GridHeader";
 import { GridRow } from "./GridRow";
+
+const noFilters: readonly ColumnFilter[] = [];
+const noSorting: readonly SortDescriptor[] = [];
 
 const fixedHeights = {
   "--adg-row-height": `${ROW_HEIGHT}px`,
@@ -46,11 +62,50 @@ export function DataGrid<T extends object>({
   enableSelection = false,
   enableEditing = false,
   onCellChange,
+  enableSorting = false,
+  enableFiltering = false,
+  searchQuery = "",
+  onSortChange,
+  onFilterChange,
   height,
   "aria-label": label = "Data grid",
 }: DataGridProps<T>) {
   const width = columns.reduce((total, column) => total + column.width, 0);
-  const rowCount = columns.length > 0 ? rows.length : 0;
+  const [sorting, setSorting] = useState<readonly SortDescriptor[]>(noSorting);
+  const [filters, setFilters] = useState<readonly ColumnFilter[]>(noFilters);
+  const [openFilterKey, setOpenFilterKey] = useState<string>();
+  const filterTrigger = useRef<HTMLButtonElement | null>(null);
+  const activeFilters = enableFiltering ? filters : noFilters;
+  const activeSorting = enableSorting ? sorting : noSorting;
+  const filtered = useMemo(
+    () => filterRows(rows, columns, activeFilters, searchQuery),
+    [rows, columns, activeFilters, searchQuery],
+  );
+  const order = useMemo(
+    () => sortRows(rows, columns, activeSorting, filtered),
+    [rows, columns, activeSorting, filtered],
+  );
+  const view = useMemo(
+    () => ({
+      order,
+      columnKeys: columns.map(({ key }) => key),
+      getKey(index: number) {
+        const originalIndex = order ? order[index] : index;
+        const row = rows[originalIndex];
+        return (
+          row && (typeof rowKey === "function" ? rowKey(row) : row[rowKey])
+        );
+      },
+    }),
+    [order, columns, rows, rowKey],
+  );
+  const originalIndex = (index: number) => (order ? order[index] : index);
+  const rowCount = columns.length > 0 ? (order?.length ?? rows.length) : 0;
+  const openColumn = enableFiltering
+    ? columns.find(
+        ({ key, filterable }) => key === openFilterKey && filterable !== false,
+      )
+    : undefined;
   const virtual =
     height !== undefined && height !== "" && height !== "auto" && rowCount > 0;
   const { containerRef, range } = useVirtualRows(virtual, rowCount, height);
@@ -61,6 +116,7 @@ export function DataGrid<T extends object>({
     { rowCount, columnCount: columns.length },
     containerRef,
     revealCell,
+    view,
   );
   const editingEnabled = enableSelection && enableEditing;
   const editing = useGridEditing(
@@ -69,11 +125,60 @@ export function DataGrid<T extends object>({
     startIndex,
     endIndex,
     finishNavigation,
+    originalIndex,
+    order,
   );
   const session = editing.editing;
+  const filterPanelId = `${selection.gridId}-filter`;
   const errorId = `${selection.gridId}-edit-error`;
   const active = selection.activeSelection?.active;
   const gridSize = { rowCount, columnCount: columns.length };
+
+  function closeFilter() {
+    setOpenFilterKey(undefined);
+    filterTrigger.current?.focus({ preventScroll: true });
+  }
+
+  function handleSort(key: string, multiple: boolean) {
+    editing.commitViewChange();
+    const next = getNextSorting(activeSorting, key, multiple);
+    setOpenFilterKey(undefined);
+    setSorting(next);
+    onSortChange?.(next);
+  }
+
+  function handleFilter(key: string, event: MouseEvent<HTMLButtonElement>) {
+    if (openColumn?.key === key) {
+      closeFilter();
+    } else {
+      editing.commitViewChange();
+      filterTrigger.current = event.currentTarget;
+      setOpenFilterKey(key);
+    }
+  }
+
+  function updateFilters(next: readonly ColumnFilter[]) {
+    editing.commitViewChange();
+    setFilters(next);
+    onFilterChange?.(next);
+  }
+
+  function applyFilter(next?: ColumnFilter) {
+    if (!openColumn) return;
+    const remaining = activeFilters.filter(
+      ({ columnKey }) => columnKey !== openColumn.key,
+    );
+    if (next || remaining.length !== activeFilters.length)
+      updateFilters(next ? [...remaining, next] : remaining);
+    closeFilter();
+  }
+
+  function skipHeaderControls() {
+    const buttons =
+      selection.tableRef.current?.tHead?.querySelectorAll("button");
+    if (buttons?.length)
+      buttons[buttons.length - 1].focus({ preventScroll: true });
+  }
 
   function finishNavigation(cell?: CellPosition, reverseTab?: boolean) {
     const table = selection.tableRef.current;
@@ -92,7 +197,10 @@ export function DataGrid<T extends object>({
       !!reverseTab,
       false,
     );
-    if (!destination) return false;
+    if (!destination) {
+      if (!reverseTab) skipHeaderControls();
+      return false;
+    }
     selection.select(destination, false);
     revealCell(destination);
     return true;
@@ -101,6 +209,7 @@ export function DataGrid<T extends object>({
   function onKeyDown(event: KeyboardEvent<HTMLTableElement>) {
     if (
       session ||
+      event.target !== event.currentTarget ||
       event.defaultPrevented ||
       event.nativeEvent.isComposing ||
       event.keyCode === 229
@@ -119,6 +228,13 @@ export function DataGrid<T extends object>({
       return;
     }
     selection.onKeyDown(event);
+    if (
+      event.key === "Tab" &&
+      !event.shiftKey &&
+      !event.defaultPrevented &&
+      active
+    )
+      skipHeaderControls();
   }
 
   function onDoubleClick(event: MouseEvent<HTMLTableElement>) {
@@ -180,7 +296,7 @@ export function DataGrid<T extends object>({
   const renderedRows = [];
 
   for (let index = startIndex; index < endIndex; index++) {
-    const row = rows[index];
+    const row = rows[originalIndex(index)];
     const key = typeof rowKey === "function" ? rowKey(row) : row[rowKey];
     renderedRows.push(
       <GridRow
@@ -217,6 +333,38 @@ export function DataGrid<T extends object>({
 
   return (
     <>
+      {activeFilters.length > 0 && (
+        <button
+          className="adg-clear-filters"
+          type="button"
+          onClick={() => {
+            updateFilters(noFilters);
+            if (openColumn) closeFilter();
+            else
+              selection.tableRef.current?.tHead
+                ?.querySelector("button")
+                ?.focus({ preventScroll: true });
+          }}
+        >
+          Clear all filters
+        </button>
+      )}
+      {openColumn && (
+        <FilterPanel
+          key={openColumn.key}
+          id={filterPanelId}
+          columnKey={openColumn.key}
+          header={openColumn.header}
+          kind={openColumn.filterType ?? "text"}
+          filter={activeFilters.find(
+            ({ columnKey, kind }) =>
+              columnKey === openColumn.key &&
+              kind === (openColumn.filterType ?? "text"),
+          )}
+          onApply={applyFilter}
+          onClose={closeFilter}
+        />
+      )}
       <div
         ref={containerRef}
         className={`adg-root${virtual ? " adg-virtual" : ""}${className ? ` ${className}` : ""}`}
@@ -231,7 +379,13 @@ export function DataGrid<T extends object>({
           aria-multiselectable={enableSelection ? true : undefined}
           onClick={enableSelection && !session ? selection.onClick : undefined}
           onDoubleClick={editingEnabled ? onDoubleClick : undefined}
-          onFocus={enableSelection && !session ? selection.onFocus : undefined}
+          onFocus={
+            enableSelection && !session
+              ? (event) => {
+                  if (event.target === event.currentTarget) selection.onFocus();
+                }
+              : undefined
+          }
           onKeyDown={enableSelection ? onKeyDown : undefined}
           onPointerDown={
             enableSelection && !session ? selection.onPointerDown : undefined
@@ -241,7 +395,9 @@ export function DataGrid<T extends object>({
             enableSelection ? selection.onPointerLeave : undefined
           }
           aria-label={label}
-          aria-rowcount={virtual || enableSelection ? rowCount + 1 : undefined}
+          aria-rowcount={
+            virtual || enableSelection || order ? rowCount + 1 : undefined
+          }
           style={{ width }}
         >
           <colgroup>
@@ -251,6 +407,15 @@ export function DataGrid<T extends object>({
           </colgroup>
           <GridHeader
             columns={columns}
+            sorting={activeSorting}
+            filters={activeFilters}
+            onSort={enableSorting ? handleSort : undefined}
+            onFilter={enableFiltering ? handleFilter : undefined}
+            filterPanel={
+              openColumn
+                ? { key: openColumn.key, id: filterPanelId }
+                : undefined
+            }
             rowIndex={virtual || enableSelection ? 1 : undefined}
           />
           <tbody>
@@ -266,9 +431,11 @@ export function DataGrid<T extends object>({
             )}
           </tbody>
         </table>
-        {rows.length === 0 && (
+        {(rows.length === 0 || order?.length === 0) && (
           <p className="adg-empty" role="status">
-            No rows to display.
+            {rows.length
+              ? "No rows match the current filters or search."
+              : "No rows to display."}
           </p>
         )}
       </div>

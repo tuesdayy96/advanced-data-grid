@@ -1,6 +1,7 @@
 import {
   useEffect,
   useId,
+  useMemo,
   useRef,
   useState,
   type KeyboardEvent,
@@ -36,23 +37,56 @@ export function getCellId(
   return `${gridId}-${rowIndex}-${columnIndex}`;
 }
 
+export interface SelectionView {
+  order: readonly number[] | undefined;
+  columnKeys: readonly string[];
+  getKey: (index: number) => unknown;
+}
+
 export function useGridSelection(
   enabled: boolean,
   { rowCount, columnCount }: GridSize,
   containerRef: RefObject<HTMLDivElement | null>,
   revealCell: (cell: CellPosition) => void,
+  view: SelectionView,
 ) {
   const gridId = useId();
   const tableRef = useRef<HTMLTableElement>(null);
-  const [selection, setSelection] = useState<CellSelection | null>(null);
+  const [state, setSelection] = useState<{
+    selection: CellSelection;
+    view: SelectionView;
+  } | null>(null);
   const size = { rowCount, columnCount };
-  const activeSelection =
-    enabled &&
-    selection &&
-    isCellInGrid(selection.active, size) &&
-    isCellInGrid(selection.anchor, size)
-      ? selection
-      : null;
+  const activeSelection = useMemo(() => {
+    if (!enabled || !state) return null;
+    const previous = state.selection;
+    if (state.view === view) return previous;
+    const key = state.view.getKey(previous.active.rowIndex);
+    const columnIndex = view.columnKeys.indexOf(
+      state.view.columnKeys[previous.active.columnIndex],
+    );
+    if (columnIndex < 0) return null;
+    let rowIndex = previous.active.rowIndex;
+    if (rowIndex >= rowCount || !Object.is(view.getKey(rowIndex), key)) {
+      rowIndex = 0;
+      while (rowIndex < rowCount && !Object.is(view.getKey(rowIndex), key))
+        rowIndex++;
+    }
+    if (rowIndex === rowCount) return null;
+    const active = { rowIndex, columnIndex };
+    const { anchor } = previous;
+    const keepAnchor =
+      state.view.order === view.order &&
+      sameCell(active, previous.active) &&
+      anchor.rowIndex < rowCount &&
+      Object.is(
+        view.getKey(anchor.rowIndex),
+        state.view.getKey(anchor.rowIndex),
+      ) &&
+      state.view.columnKeys[anchor.columnIndex] ===
+        view.columnKeys[anchor.columnIndex];
+    return { active, anchor: keepAnchor ? anchor : active };
+  }, [enabled, rowCount, state, view]);
 
   const drag = useRef<{
     id: number;
@@ -62,8 +96,14 @@ export function useGridSelection(
   } | null>(null);
 
   useEffect(() => {
-    if (selection && !activeSelection) setSelection(null);
-  }, [selection, activeSelection]);
+    if (state && (!activeSelection || state.view !== view)) {
+      setSelection((current) =>
+        current === state
+          ? activeSelection && { selection: activeSelection, view }
+          : current,
+      );
+    }
+  }, [state, activeSelection, view]);
 
   useEffect(() => {
     if (!enabled) return;
@@ -90,7 +130,9 @@ export function useGridSelection(
   }, [enabled, rowCount, columnCount]);
 
   function select(cell: CellPosition, extend: boolean) {
-    setSelection((previous) => {
+    setSelection((current) => {
+      const previous =
+        current?.view === view ? current.selection : activeSelection;
       const anchor =
         extend && previous && isCellInGrid(previous.anchor, size)
           ? previous.anchor
@@ -100,8 +142,8 @@ export function useGridSelection(
         sameCell(previous.active, cell) &&
         sameCell(previous.anchor, anchor)
       )
-        return previous;
-      return { active: cell, anchor };
+        return current?.view === view ? current : { selection: previous, view };
+      return { selection: { active: cell, anchor }, view };
     });
   }
 

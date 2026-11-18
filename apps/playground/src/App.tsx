@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { DataGrid, type CellChange } from "@advanced-data-grid/react-data-grid";
+import {
+  DataGrid,
+  type CellChange,
+  type ColumnFilter,
+  type SortDescriptor,
+} from "@advanced-data-grid/react-data-grid";
 import { applyEmployeeChange, columns } from "./demo/columns";
 import { defaultGridFlags, gridFlags } from "./demo/gridFlags";
 import { GridMetrics } from "./demo/GridMetrics";
@@ -31,15 +36,26 @@ export function App() {
   const [demo, setDemo] = useState(initialDemo);
   const [selectedSize, setSelectedSize] = useState(sizes[0]);
   const [flags, setFlags] = useState(defaultGridFlags);
+  const [search, setSearch] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sorting, setSorting] = useState<readonly SortDescriptor[]>([]);
+  const [filters, setFilters] = useState<readonly ColumnFilter[]>([]);
   const [lastChange, setLastChange] = useState<CellChange<Employee>>();
   const demoRef = useRef<HTMLDivElement>(null);
   const preparing = selectedSize !== demo.rows.length;
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setSearchQuery(search), 150);
+    return () => window.clearTimeout(timer);
+  }, [search]);
 
   useEffect(() => {
     if (!preparing) return;
     return prepareEmployees(selectedSize, (rows, generationMs) => {
       setDemo({ rows, generationMs });
       setLastChange(undefined);
+      setSorting([]);
+      setFilters([]);
     });
   }, [preparing, selectedSize]);
 
@@ -140,6 +156,59 @@ export function App() {
               Preparing {numberFormat.format(selectedSize)} rows...
             </p>
           )}
+          <div className="mb-4 flex flex-wrap items-end gap-2">
+            <label className="grid gap-1 text-sm font-medium text-slate-700">
+              Search employees
+              <input
+                type="search"
+                className="w-64 max-w-full rounded-md border border-slate-300 bg-white px-3 py-1.5"
+                value={search}
+                onChange={(event) => {
+                  setSearch(event.currentTarget.value);
+                  if (!event.currentTarget.value) setSearchQuery("");
+                }}
+              />
+            </label>
+            {search && (
+              <button
+                type="button"
+                className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm"
+                onClick={() => {
+                  setSearch("");
+                  setSearchQuery("");
+                }}
+              >
+                Clear search
+              </button>
+            )}
+          </div>
+          {((flags.enableSorting && sorting.length > 0) ||
+            (flags.enableFiltering && filters.length > 0)) && (
+            <div className="mb-3 space-y-1 text-sm text-slate-700">
+              {flags.enableSorting && sorting.length > 0 && (
+                <p>
+                  Sort order:{" "}
+                  {sorting
+                    .map(
+                      ({ columnKey, direction }) =>
+                        `${columns.find(({ key }) => key === columnKey)?.header ?? columnKey} ${direction}`,
+                    )
+                    .join(", ")}
+                </p>
+              )}
+              {flags.enableFiltering && filters.length > 0 && (
+                <p>
+                  Active filters:{" "}
+                  {filters
+                    .map(
+                      ({ columnKey, operator, value }) =>
+                        `${columns.find(({ key }) => key === columnKey)?.header ?? columnKey} ${operator} ${value}`,
+                    )
+                    .join(", ")}
+                </p>
+              )}
+            </div>
+          )}
           <GridMetrics demoRef={demoRef} total={demo.rows.length} />
           <div ref={demoRef}>
             <DataGrid
@@ -149,6 +218,9 @@ export function App() {
               rows={demo.rows}
               rowKey="id"
               onCellChange={onCellChange}
+              searchQuery={searchQuery}
+              onSortChange={setSorting}
+              onFilterChange={setFilters}
               {...flags}
               height="min(540px, 65vh)"
             />

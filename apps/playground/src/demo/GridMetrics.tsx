@@ -2,6 +2,7 @@ import { useEffect, useState, type RefObject } from "react";
 
 interface Metrics {
   rendered: number;
+  filtered: number;
   firstVisible: number;
   lastVisible: number;
   viewportHeight: number;
@@ -32,14 +33,17 @@ export function GridMetrics({
         0,
         scroller.clientHeight - (table.tHead?.offsetHeight ?? 0),
       );
+      const declaredRows = table.getAttribute("aria-rowcount");
+      const filtered = declaredRows === null ? total : Number(declaredRows) - 1;
       const next = {
+        filtered,
         rendered: rows.length,
         firstVisible: rowHeight
           ? Math.floor(scroller.scrollTop / rowHeight) + 1
           : 0,
         lastVisible: rowHeight
           ? Math.min(
-              total,
+              filtered,
               Math.ceil((scroller.scrollTop + viewportHeight) / rowHeight),
             )
           : 0,
@@ -60,7 +64,7 @@ export function GridMetrics({
       childList: true,
       subtree: true,
       attributes: true,
-      attributeFilter: ["aria-rowindex"],
+      attributeFilter: ["aria-rowindex", "aria-rowcount"],
     });
     const observer = new ResizeObserver(schedule);
     observer.observe(scroller);
@@ -77,6 +81,12 @@ export function GridMetrics({
 
   return (
     <dl className="mb-4 flex flex-wrap gap-x-6 gap-y-2 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm tabular-nums">
+      <div>
+        <dt className="text-slate-600">Matching rows</dt>
+        <dd className="font-semibold">
+          {metrics?.filtered.toLocaleString("en-US") ?? "?"}
+        </dd>
+      </div>
       <div>
         <dt className="text-slate-600">Rendered rows</dt>
         <dd className="font-semibold">{metrics?.rendered ?? "—"}</dd>

@@ -11,7 +11,7 @@ function required(value: unknown) {
 }
 
 export const columns = [
-  { key: "id", header: "ID", width: 80 },
+  { key: "id", header: "ID", width: 80, filterType: "number" },
   {
     key: "name",
     header: "Name",
@@ -37,6 +37,7 @@ export const columns = [
   { key: "status", header: "Status", width: 115 },
   {
     key: "salary",
+    filterType: "number",
     header: "Salary",
     width: 125,
     editable: true,
@@ -48,6 +49,7 @@ export const columns = [
   },
   {
     key: "createdAt",
+    filterType: "date",
     header: "Created at",
     width: 131,
     editable: true,

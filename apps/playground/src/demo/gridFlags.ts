@@ -19,6 +19,8 @@ export const gridFlags = [
     label: "Cell editing (requires selection)",
     defaultValue: true,
   },
+  { prop: "enableSorting", label: "Column sorting", defaultValue: true },
+  { prop: "enableFiltering", label: "Column filtering", defaultValue: true },
 ] as const satisfies readonly {
   prop: BooleanGridProp;
   label: string;

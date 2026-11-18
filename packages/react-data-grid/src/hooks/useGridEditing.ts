@@ -13,6 +13,8 @@ import type { DataGridProps, RowKey } from "../types/grid";
 interface Session {
   cell: CellPosition;
   rowKey: RowKey;
+  originalIndex: number;
+  order: readonly number[] | undefined;
   columnKey: string;
   original: unknown;
   kind: EditorKind;
@@ -30,6 +32,8 @@ export function useGridEditing<T extends object>(
   startIndex: number,
   endIndex: number,
   finishNavigation: (cell?: CellPosition, tab?: boolean) => boolean,
+  originalIndex: (index: number) => number,
+  order: readonly number[] | undefined,
 ) {
   const current = useRef<Session | null>(null);
   const draft = useRef("");
@@ -43,7 +47,7 @@ export function useGridEditing<T extends object>(
   }
 
   function getTarget(session: Session) {
-    const row = rows[session.cell.rowIndex];
+    const row = rows[session.originalIndex];
     const column = columns[session.cell.columnIndex];
     if (
       !enabled ||
@@ -60,13 +64,16 @@ export function useGridEditing<T extends object>(
 
   function start(cell: CellPosition) {
     if (!enabled || current.current) return false;
-    const row = rows[cell.rowIndex];
+    const index = originalIndex(cell.rowIndex);
+    const row = rows[index];
     const column = columns[cell.columnIndex];
     const editor = row && column ? getEditor(column, row) : null;
     if (!editor) return false;
     const session = {
       ...editor,
       cell,
+      originalIndex: index,
+      order,
       rowKey: keyFor(row),
       columnKey: column.key,
     };
@@ -110,7 +117,7 @@ export function useGridEditing<T extends object>(
       onCellChange?.({
         rowKey: session.rowKey,
         columnKey: session.columnKey,
-        rowIndex: session.cell.rowIndex,
+        rowIndex: session.originalIndex,
         previousValue: session.original,
         value: result.value,
         row,
@@ -119,7 +126,8 @@ export function useGridEditing<T extends object>(
     return true;
   }
 
-  const validSession = editing && getTarget(editing) ? editing : null;
+  const targetExists = editing && getTarget(editing);
+  const validSession = targetExists && editing.order === order ? editing : null;
 
   useEffect(() => {
     const session = current.current;
@@ -128,10 +136,14 @@ export function useGridEditing<T extends object>(
       return;
     }
     const { rowIndex } = session.cell;
-    if (validSession !== session) {
+    if (!targetExists) {
       close();
       finishNavigation();
-    } else if (rowIndex < startIndex || rowIndex >= endIndex) {
+    } else if (
+      session.order !== order ||
+      rowIndex < startIndex ||
+      rowIndex >= endIndex
+    ) {
       commit(true);
       finishNavigation();
     }
@@ -168,5 +180,6 @@ export function useGridEditing<T extends object>(
     updateDraft,
     onEditorKeyDown,
     onBlur: () => commit(true),
+    commitViewChange: () => commit(true),
   };
 }
