@@ -1,2 +1,7 @@
 export { DataGrid } from "./components/DataGrid";
-export type { ColumnDef, DataGridProps, RowKey } from "./types/grid";
+export type {
+  CellChange,
+  ColumnDef,
+  DataGridProps,
+  RowKey,
+} from "./types/grid";

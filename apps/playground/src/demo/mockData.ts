@@ -6,6 +6,7 @@ export interface Employee {
   role: string;
   status: "Active" | "On leave" | "Onboarding";
   createdAt: Date;
+  salary: number;
 }
 
 const firstNames = [
@@ -60,6 +61,7 @@ function createEmployee(index: number): Employee {
 
   return {
     id: 1001 + index,
+    salary: 48_000 + (index % 38) * 2_500,
     name,
     email,
     department,
