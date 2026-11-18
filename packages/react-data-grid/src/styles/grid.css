@@ -1,0 +1,75 @@
+.adg-root {
+  max-width: 100%;
+  overflow: auto;
+  border: 1px solid #d9e3ee;
+  border-radius: 12px;
+  background: #fff;
+  color: #18283b;
+  font:
+    400 0.875rem/1.5 system-ui,
+    sans-serif;
+}
+
+.adg-root .adg-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+}
+
+.adg-table th,
+.adg-table td {
+  box-sizing: border-box;
+  overflow: hidden;
+  padding: 0.7rem 1rem;
+  border-bottom: 1px solid #e6edf4;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adg-table th {
+  background: #edf3f9;
+  color: #33485f;
+  font-weight: 650;
+}
+
+.adg-table tbody tr:hover > td {
+  background: #f3f8fc;
+}
+
+.adg-table tbody tr:last-child > td {
+  border-bottom: 0;
+}
+
+.adg-root .adg-empty {
+  margin: 0;
+  padding: 2rem 1rem;
+  color: #52647b;
+  text-align: center;
+}
+
+.adg-virtual {
+  overflow-anchor: none;
+}
+
+.adg-virtual .adg-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  height: var(--adg-header-height);
+  padding-block: 0;
+  line-height: 20px;
+}
+
+.adg-virtual .adg-table tbody tr:not(.adg-spacer) > td {
+  height: var(--adg-row-height);
+  padding-block: 0;
+  line-height: 20px;
+}
+
+.adg-virtual .adg-table tbody tr.adg-spacer > td {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  line-height: 0;
+}
