@@ -1,22 +1,6 @@
-## Install from a local tarball
+## Install from npm
 
-Build and pack the library from the repository root with Node.js 22.18+ and pnpm 10.
-
-```sh
-pnpm install
-pnpm build:lib
-pnpm --filter @advanced-data-grid/react-data-grid pack
-```
-
-Copy the generated `.tgz` into the consuming app and use one of these commands. The example filename uses the current workspace version.
-
-```sh
-npm install ./advanced-data-grid-react-data-grid-0.1.0.tgz
-pnpm add ./advanced-data-grid-react-data-grid-0.1.0.tgz
-yarn add ./advanced-data-grid-react-data-grid-0.1.0.tgz
-```
-
-Version 0.1.0 is being prepared for public release. Once the version appears in the public npm registry, install it by name.
+Install the package with your package manager.
 
 ```sh
 npm install @advanced-data-grid/react-data-grid

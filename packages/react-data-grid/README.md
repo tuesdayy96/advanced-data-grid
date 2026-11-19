@@ -4,15 +4,7 @@ A React and TypeScript data grid with row virtualization, keyboard navigation, c
 
 ## Installation
 
-Version `0.1.0` is being prepared for public release. Use a local tarball during release testing.
-
-```sh
-npm install ./advanced-data-grid-react-data-grid-0.1.0.tgz
-pnpm add ./advanced-data-grid-react-data-grid-0.1.0.tgz
-yarn add ./advanced-data-grid-react-data-grid-0.1.0.tgz
-```
-
-Once the release is on the public registry, install `@advanced-data-grid/react-data-grid` by name.
+Install from the [public npm registry](https://www.npmjs.com/package/@advanced-data-grid/react-data-grid) with your package manager.
 
 ```sh
 npm install @advanced-data-grid/react-data-grid

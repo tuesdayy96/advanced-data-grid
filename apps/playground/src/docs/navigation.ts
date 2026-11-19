@@ -19,8 +19,8 @@ export const pages = [
       ko: "설치",
     },
     description: {
-      en: "Install the local package and import its stylesheet.",
-      ko: "로컬 패키지를 설치하고 스타일시트를 가져옵니다.",
+      en: "Install the package from npm and import its stylesheet.",
+      ko: "npm에서 패키지를 설치하고 스타일시트를 불러옵니다.",
     },
   },
   {

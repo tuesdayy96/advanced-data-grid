@@ -44,7 +44,7 @@ test("navigates between the Playground and localized documentation", async ({
   await expect(page).toHaveTitle("설치 | Advanced Data Grid");
   await expect(page.locator('meta[name="description"]')).toHaveAttribute(
     "content",
-    /로컬 패키지/,
+    /npm에서 패키지/,
   );
   await expect(
     page.locator('link[rel="alternate"][hreflang="en"]'),

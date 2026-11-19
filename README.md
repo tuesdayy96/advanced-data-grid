@@ -4,23 +4,7 @@ A React and TypeScript data grid with semantic table markup, fixed-height row vi
 
 ## Installation
 
-Version `0.1.0` is being prepared for public release. For local testing, build and pack from the repository root, then copy the tarball to the consuming app.
-
-```sh
-pnpm install
-pnpm build:lib
-pnpm --filter @advanced-data-grid/react-data-grid pack
-```
-
-Install the tarball with one package manager.
-
-```sh
-npm install ./advanced-data-grid-react-data-grid-0.1.0.tgz
-pnpm add ./advanced-data-grid-react-data-grid-0.1.0.tgz
-yarn add ./advanced-data-grid-react-data-grid-0.1.0.tgz
-```
-
-Once the public version is available, install it by name.
+Install from the [public npm registry](https://www.npmjs.com/package/@advanced-data-grid/react-data-grid) with your package manager.
 
 ```sh
 npm install @advanced-data-grid/react-data-grid
