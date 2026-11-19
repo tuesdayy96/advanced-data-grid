@@ -1,0 +1,300 @@
+.adg-root {
+  max-width: 100%;
+  overflow: auto;
+  border: 1px solid #d9e3ee;
+  border-radius: 12px;
+  background: #fff;
+  color: #18283b;
+  font:
+    400 0.875rem/1.5 system-ui,
+    sans-serif;
+}
+
+.adg-root .adg-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+}
+
+.adg-table th,
+.adg-table td {
+  box-sizing: border-box;
+  overflow: hidden;
+  padding: 0.7rem 1rem;
+  border-bottom: 1px solid #e6edf4;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adg-column-dividers th:not(:last-child),
+.adg-column-dividers td:not(:last-child) {
+  border-inline-end: 1px solid #d9e3ee;
+}
+
+.adg-table th {
+  background: #edf3f9;
+  color: #33485f;
+  font-weight: 650;
+}
+
+.adg-table tbody tr:hover > td {
+  background: #f3f8fc;
+}
+
+.adg-table tbody tr:last-child > td {
+  border-bottom: 0;
+}
+
+.adg-root .adg-empty {
+  margin: 0;
+  padding: 2rem 1rem;
+  color: #52647b;
+  text-align: center;
+}
+
+.adg-virtual {
+  overflow-anchor: none;
+}
+
+.adg-virtual .adg-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  height: var(--adg-header-height);
+  padding-block: 0;
+  line-height: 20px;
+}
+
+.adg-virtual .adg-table tbody tr:not(.adg-spacer) > td {
+  height: var(--adg-row-height);
+  padding-block: 0;
+  line-height: 20px;
+}
+
+.adg-virtual .adg-table tbody tr.adg-spacer > td {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  line-height: 0;
+}
+
+.adg-table[role="grid"] td[aria-selected="true"] {
+  background: #dbeafe;
+}
+
+.adg-table[role="grid"] tbody tr:hover td[aria-selected="true"] {
+  background: #dbeafe;
+}
+
+.adg-table[role="grid"] td.adg-active {
+  box-shadow: inset 0 0 0 2px #2455b2;
+}
+
+.adg-table[role="grid"]:focus-visible {
+  outline: 2px solid #2455b2;
+  outline-offset: -2px;
+}
+
+.adg-table td[data-adg-editing] {
+  position: relative;
+}
+
+.adg-editor {
+  position: absolute;
+  inset: 1px;
+  width: calc(100% - 2px);
+  height: calc(100% - 2px);
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0 0.6rem;
+  border: 2px solid #2455b2;
+  border-radius: 0;
+  background: #fff;
+  color: inherit;
+  font: inherit;
+}
+
+.adg-editor[aria-invalid="true"] {
+  border-color: #b42318;
+}
+
+.adg-edit-error {
+  margin: 0.4rem 0;
+  color: #8f2017;
+  font:
+    500 0.875rem/1.5 system-ui,
+    sans-serif;
+}
+
+.adg-header-controls,
+.adg-sort-button {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.adg-header-controls > span,
+.adg-sort-button > span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.adg-table th:has(.adg-header-controls) {
+  padding-inline: 0.25rem;
+}
+
+.adg-sort-button,
+.adg-filter-button,
+.adg-filter-panel button,
+.adg-clear-filters {
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.adg-sort-button,
+.adg-filter-button {
+  border: 0;
+  border-radius: 4px;
+  padding: 0.15rem 0.2rem;
+  line-height: 1;
+  background: transparent;
+}
+
+.adg-filter-button {
+  display: grid;
+  place-items: center;
+  flex: none;
+  margin-left: auto;
+}
+
+.adg-sort-button:hover,
+.adg-filter-button:hover,
+.adg-filter-button[data-filtered] {
+  background: #d4e4fa;
+  color: #17468a;
+}
+
+.adg-header-controls button:focus-visible {
+  outline: 2px solid #2455b2;
+  outline-offset: -1px;
+}
+
+.adg-filter-panel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  padding: 0.5rem;
+  border: 1px solid #d9e3ee;
+  border-radius: 6px;
+  color: #18283b;
+  font:
+    400 0.875rem/1.5 system-ui,
+    sans-serif;
+}
+
+.adg-filter-panel label {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.adg-filter-panel input,
+.adg-filter-panel select,
+.adg-filter-panel button,
+.adg-clear-filters {
+  max-width: 100%;
+  border: 1px solid #b5c5d7;
+  border-radius: 4px;
+  padding: 0.3rem 0.45rem;
+  background: #fff;
+  font:
+    400 0.875rem/1.5 system-ui,
+    sans-serif;
+}
+
+.adg-clear-filters {
+  margin-bottom: 0.5rem;
+  color: #17468a;
+}
+
+.adg-filter-panel [aria-invalid="true"],
+.adg-filter-panel [role="alert"] {
+  color: #8f2017;
+  border-color: #b42318;
+}
+
+.adg-table th[data-resizable] {
+  position: relative;
+  padding-right: 0.75rem;
+}
+
+.adg-resize-handle {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.adg-resize-handle:hover,
+.adg-resize-handle:focus-visible,
+.adg-root[data-resizing] {
+  cursor: col-resize;
+}
+
+.adg-resize-handle:hover,
+.adg-resize-handle:focus-visible {
+  background: #b9d1f6;
+}
+
+.adg-resize-handle:focus-visible {
+  outline: 2px solid #2455b2;
+  outline-offset: -2px;
+}
+
+.adg-root[data-resizing] {
+  user-select: none;
+}
+
+.adg-table td[data-pin] {
+  position: sticky;
+  z-index: 1;
+  background: #fff;
+}
+
+.adg-table th[data-pin] {
+  position: sticky;
+  z-index: 2;
+}
+
+.adg-virtual .adg-table thead th[data-pin] {
+  z-index: 3;
+}
+
+.adg-table [data-pin-boundary]::after {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: #b5c5d7;
+  content: "";
+  pointer-events: none;
+}
+
+.adg-table [data-pin="left"][data-pin-boundary]::after {
+  right: 0;
+}
+
+.adg-table [data-pin="right"][data-pin-boundary]::after {
+  left: 0;
+}
