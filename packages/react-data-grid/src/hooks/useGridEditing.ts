@@ -131,6 +131,8 @@ export function useGridEditing<T extends object>(
 
   useEffect(() => {
     const session = current.current;
+    // These render-time checks only describe the session committed by this render.
+    if (session !== editing) return;
     if (!session) {
       if (!enabled && error) setError(undefined);
       return;

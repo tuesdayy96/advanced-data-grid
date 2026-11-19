@@ -182,6 +182,59 @@ test("edits text, numeric and date values with validation, cancellation and focu
   await expect(cell(page, 0, 7)).toHaveText("2028-02-29");
 });
 
+test("reopens the same editor after commit and cancellation without clicking again", async ({
+  page,
+}) => {
+  const name = cell(page, 0, 1);
+  const editor = grid(page).getByRole("textbox", { name: "Edit Name" });
+  await name.click();
+  await page.keyboard.press("F2");
+  await expect(editor).toBeFocused();
+  await editor.fill("Updated name");
+  await page.keyboard.press("Enter");
+  await expect(name).toHaveText("Updated name");
+  await expect(grid(page)).toBeFocused();
+  await expectActive(page, 0, 1);
+
+  await page.keyboard.press("F2");
+  await expect(editor).toBeFocused();
+  await expect(editor).toHaveValue("Updated name");
+  await editor.fill("Cancelled name");
+  await page.keyboard.press("Escape");
+  await expect(grid(page)).toBeFocused();
+  await expect(name).toHaveText("Updated name");
+  await expectActive(page, 0, 1);
+
+  await page.keyboard.press("F2");
+  await expect(editor).toBeFocused();
+  await expect(editor).toHaveValue("Updated name");
+});
+
+for (const [key, from, to, nextEditor] of [
+  ["ArrowRight", 3, 4, "Role"],
+  ["Shift+Tab", 4, 3, "Department"],
+] as const) {
+  test(`opens the next editor after commit and ${key}`, async ({ page }) => {
+    const source = cell(page, 0, from);
+    await source.click();
+    await page.keyboard.press("Enter");
+    const editor = grid(page).getByRole("textbox", { name: /^Edit / });
+    await expect(editor).toBeFocused();
+    await editor.fill("Updated value");
+    await page.keyboard.press("Enter");
+    await expect(source).toHaveText("Updated value");
+    await expect(grid(page)).toBeFocused();
+
+    await page.keyboard.press(key);
+    await expectActive(page, 0, to);
+    await page.keyboard.press("F2");
+    await expect(
+      grid(page).getByRole("textbox", { name: `Edit ${nextEditor}` }),
+    ).toBeFocused();
+    await expect(source).toHaveText("Updated value");
+  });
+}
+
 test("sorts by multiple criteria and edits the correct filtered row", async ({
   page,
 }) => {

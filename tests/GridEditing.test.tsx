@@ -3,11 +3,14 @@ import {
   cleanup,
   fireEvent,
   render,
+  renderHook,
   screen,
   within,
 } from "@testing-library/react";
+import { useLayoutEffect, useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { DataGrid, type ColumnDef } from "../packages/react-data-grid/src";
+import { useGridEditing } from "../packages/react-data-grid/src/hooks/useGridEditing";
 
 interface Row {
   id: number;
@@ -73,6 +76,52 @@ const draft = (input: HTMLElement, value: string) =>
   fireEvent.change(input, { target: { value } });
 
 describe("DataGrid editing", () => {
+  it("keeps a new session started before the previous render's passive effect", () => {
+    const position = { rowIndex: 0, columnIndex: 1 };
+    let reopen = false;
+    const { result } = renderHook(
+      () => {
+        const [data, setData] = useState<readonly Row[]>(rows);
+        const editor = useGridEditing(
+          {
+            rows: data,
+            columns,
+            rowKey: "id",
+            onCellChange: ({ value }) =>
+              setData([{ ...rows[0], name: String(value) }, rows[1]]),
+          },
+          true,
+          0,
+          rows.length,
+          () => false,
+          (index) => index,
+          undefined,
+        );
+
+        useLayoutEffect(() => {
+          if (reopen && !editor.editing) {
+            reopen = false;
+            editor.start(position);
+          }
+        });
+
+        return editor;
+      },
+      { reactStrictMode: true },
+    );
+
+    act(() => {
+      result.current.start(position);
+    });
+    act(() => {
+      result.current.updateDraft("Updated name");
+      reopen = true;
+      result.current.commitViewChange();
+    });
+
+    expect(result.current.editing?.initial).toBe("Updated name");
+  });
+
   it("starts on double-click, sends a single controlled event with raw values, and restores focus", () => {
     const onCellChange = vi.fn();
     render(
