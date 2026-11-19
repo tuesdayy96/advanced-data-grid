@@ -1,6 +1,6 @@
 {
   "name": "@advanced-data-grid/react-data-grid",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A typed React data grid with virtual scrolling, cell editing, sorting, filtering, and standalone CSS.",
   "license": "MIT",
   "type": "module",
