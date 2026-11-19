@@ -1,8 +1,8 @@
 import {
+  useEffect,
   useMemo,
   useRef,
   useState,
-  type ClipboardEvent,
   type CSSProperties,
   type KeyboardEvent,
   type MouseEvent,
@@ -81,6 +81,7 @@ export function DataGrid<T extends object>({
 }: DataGridProps<T>) {
   const [copyFailed, setCopyFailed] = useState(false);
   const copyAttempt = useRef(0);
+  const copyHandler = useRef<(event: ClipboardEvent) => void>(null);
   const [sorting, setSorting] = useState<readonly SortDescriptor[]>(noSorting);
   const [filters, setFilters] = useState<readonly ColumnFilter[]>(noFilters);
   const [openFilterKey, setOpenFilterKey] = useState<string>();
@@ -260,6 +261,7 @@ export function DataGrid<T extends object>({
     if (!cell || !editing.start(cell)) return;
     if (!active || !sameCell(cell, active)) selection.select(cell, false);
   }
+  const reportRowCount = virtual || enableSelection || order !== undefined;
   const activeId =
     !session &&
     active &&
@@ -277,13 +279,30 @@ export function DataGrid<T extends object>({
       }
     : undefined;
 
-  function onCopy(event: ClipboardEvent<HTMLTableElement>) {
-    const table = event.currentTarget;
+  useEffect(() => {
+    copyHandler.current = onCopy;
+  });
+
+  const { tableRef } = selection;
+  useEffect(() => {
+    if (!enableSelection || !enableClipboard || !tableRef.current) return;
+    const owner = tableRef.current.ownerDocument;
+    const handleCopy = (event: ClipboardEvent) => copyHandler.current?.(event);
+    owner.addEventListener("copy", handleCopy);
+    return () => {
+      owner.removeEventListener("copy", handleCopy);
+      copyAttempt.current++;
+    };
+  }, [enableSelection, enableClipboard, tableRef]);
+
+  function onCopy(event: ClipboardEvent) {
+    const table = tableRef.current;
     const range = interaction?.range;
     if (
       session ||
       !range ||
-      event.target !== table ||
+      !table ||
+      event.defaultPrevented ||
       table.ownerDocument.activeElement !== table
     )
       return;
@@ -376,7 +395,7 @@ export function DataGrid<T extends object>({
               }
             : undefined
         }
-        rowIndex={virtual || enableSelection ? index + 2 : undefined}
+        rowIndex={reportRowCount ? index + 2 : undefined}
       />,
     );
   }
@@ -417,6 +436,7 @@ export function DataGrid<T extends object>({
       )}
       <div
         ref={containerRef}
+        tabIndex={enableSelection && rowCount > 0 ? -1 : undefined}
         className={`adg-root${virtual ? " adg-virtual" : ""}${className ? ` ${className}` : ""}`}
         style={virtual ? { ...fixedHeights, height } : { height }}
         data-resizing={columnLayout.resizing || undefined}
@@ -431,7 +451,6 @@ export function DataGrid<T extends object>({
           aria-activedescendant={activeId}
           aria-multiselectable={enableSelection ? true : undefined}
           onClick={enableSelection && !session ? selection.onClick : undefined}
-          onCopy={enableSelection && enableClipboard ? onCopy : undefined}
           onDoubleClick={editingEnabled ? onDoubleClick : undefined}
           onFocus={
             enableSelection && !session
@@ -449,9 +468,7 @@ export function DataGrid<T extends object>({
             enableSelection ? selection.onPointerLeave : undefined
           }
           aria-label={label}
-          aria-rowcount={
-            virtual || enableSelection || order ? rowCount + 1 : undefined
-          }
+          aria-rowcount={reportRowCount ? rowCount + 1 : undefined}
           style={{ width: layout.width }}
         >
           <colgroup>
@@ -474,7 +491,7 @@ export function DataGrid<T extends object>({
                 ? { key: openColumn.key, id: filterPanelId }
                 : undefined
             }
-            rowIndex={virtual || enableSelection ? 1 : undefined}
+            rowIndex={reportRowCount ? 1 : undefined}
           />
           <tbody>
             {virtual && (

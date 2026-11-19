@@ -1,4 +1,4 @@
-import { getCellText } from "./cellValue";
+import { formatUtcDate, getCellText } from "./cellValue";
 import type { getSelectionRange } from "./selection";
 import type { ColumnDef } from "../types/grid";
 
@@ -13,11 +13,22 @@ export function serializeSelection<T>(
   range: ReturnType<typeof getSelectionRange>,
 ) {
   const lines: string[] = [];
+  const fields: string[] = [];
+  const dates = new Map<number, string>();
+  function cachedDate(value: Date) {
+    const time = value.getTime();
+    const cached = dates.get(time);
+    if (cached !== undefined) return cached;
+    const formatted = formatUtcDate(value);
+    if (dates.size < 1024) dates.set(time, formatted);
+    return formatted;
+  }
   for (let index = range.startRow; index <= range.endRow; index++) {
     const row = rows[order?.[index] ?? index];
-    const fields: string[] = [];
     for (let column = range.startColumn; column <= range.endColumn; column++) {
-      fields.push(escapeField(getCellText(row, columns[column]) ?? ""));
+      fields[column - range.startColumn] = escapeField(
+        getCellText(row, columns[column], cachedDate) ?? "",
+      );
     }
     lines.push(fields.join("\t"));
   }

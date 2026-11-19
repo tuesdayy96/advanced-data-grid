@@ -367,3 +367,16 @@ describe("sorting, filtering and searching DataGrid", () => {
     expect(names().length).toBeLessThanOrEqual(16);
   });
 });
+
+it("indexes the semantic header and rows when a filtered native table declares its row count", () => {
+  render(
+    <DataGrid columns={columns} rows={rows} rowKey="id" searchQuery="design" />,
+  );
+  const table = screen.getByRole("table");
+  expect(table.getAttribute("aria-rowcount")).toBe("3");
+  expect(
+    within(table)
+      .getAllByRole("row")
+      .map((row) => row.getAttribute("aria-rowindex")),
+  ).toEqual(["1", "2", "3"]);
+});

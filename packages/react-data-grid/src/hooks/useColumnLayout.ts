@@ -16,12 +16,20 @@ import type { ColumnDef } from "../types/grid";
 
 interface Resize {
   pointerId: number;
+  handle: HTMLButtonElement;
   key: string;
   x: number;
   initial: number;
   width: number;
   limits: ReturnType<typeof getWidthLimits>;
   frame?: number;
+}
+
+function releaseResize(drag: Resize) {
+  if (drag.frame !== undefined) cancelAnimationFrame(drag.frame);
+  if (drag.handle.hasPointerCapture?.(drag.pointerId)) {
+    drag.handle.releasePointerCapture(drag.pointerId);
+  }
 }
 
 export function useColumnLayout<T>(
@@ -76,8 +84,7 @@ export function useColumnLayout<T>(
           key === resize.current?.key && resizable !== false,
       )
     ) {
-      if (resize.current.frame !== undefined)
-        cancelAnimationFrame(resize.current.frame);
+      releaseResize(resize.current);
       resize.current = null;
       setPreview(undefined);
     }
@@ -109,7 +116,7 @@ export function useColumnLayout<T>(
       const drag = resize.current;
       if (!drag) return;
       resize.current = null;
-      if (drag.frame !== undefined) cancelAnimationFrame(drag.frame);
+      releaseResize(drag);
       setPreview(undefined);
       return drag;
     }
@@ -137,8 +144,7 @@ export function useColumnLayout<T>(
       win.removeEventListener("pointerup", onUp);
       win.removeEventListener("pointercancel", onCancel);
       win.removeEventListener("blur", stop);
-      if (resize.current?.frame !== undefined)
-        cancelAnimationFrame(resize.current.frame);
+      if (resize.current) releaseResize(resize.current);
       resize.current = null;
     };
   }, [containerRef, enableColumnResize]);
@@ -153,6 +159,7 @@ export function useColumnLayout<T>(
     event.currentTarget.setPointerCapture?.(event.pointerId);
     resize.current = {
       pointerId: event.pointerId,
+      handle: event.currentTarget,
       key: entry.column.key,
       x: event.clientX,
       width: entry.width,

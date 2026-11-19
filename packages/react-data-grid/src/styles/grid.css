@@ -257,6 +257,11 @@
   background: #b9d1f6;
 }
 
+.adg-resize-handle:focus-visible {
+  outline: 2px solid #2455b2;
+  outline-offset: -2px;
+}
+
 .adg-root[data-resizing] {
   user-select: none;
 }

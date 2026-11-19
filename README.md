@@ -165,8 +165,27 @@ Node.js 22.18 이상과 pnpm 10이 필요합니다. Corepack을 사용하는 경
 | `pnpm format:check` | Prettier 포맷을 검사합니다.                                                                                             |
 | `pnpm test`         | Vitest와 React Testing Library 테스트를 실행합니다.                                                                     |
 
+### 문서 사이트
+
+`pnpm dev` 실행 후 Playground와 문서를 같은 주소에서 열 수 있습니다. 기본 문서는 `/docs/en`이며 한국어 문서는 `/docs/ko`에서 볼 수 있습니다. 상단 언어 전환은 현재 문서 경로를 유지합니다.
+
+`pnpm build`는 라이브러리와 사이트를 빌드합니다. 사이트 산출물은 `apps/playground/dist`입니다. Vercel에서 사용할 때 프로젝트의 Root Directory를 `apps/playground`로 지정하고 루트 외부 소스 포함을 활성화하면 워크스페이스 라이브러리도 함께 빌드할 수 있습니다. 앱의 `vercel.json`은 중첩 문서 URL을 SPA로 연결합니다. 공개 설치 명령과 canonical 주소는 패키지 및 도메인 확정 후 반영합니다.
+
+### 브라우저 검증
+
+```sh
+pnpm exec playwright install chromium firefox webkit
+pnpm test:e2e
+```
+
+Playwright는 프로덕션 Playground를 빌드해 Chromium, Firefox, WebKit에서 검증합니다. Linux CI에서는 브라우저 시스템 의존성도 설치하도록 `pnpm exec playwright install --with-deps`를 사용할 수 있습니다. 실패 시 `test-results/`에서 trace와 스크린샷을 확인할 수 있습니다.
+
+환경변수 `ADG_E2E_DEV=1`을 설정하면 Vite 개발 서버에서 같은 테스트를 실행합니다. 설치된 Windows Edge를 함께 실행하려면 `ADG_E2E_EDGE=1`을 설정합니다. 성능과 힙 샘플을 수집하려면 `ADG_PERF=1`을 설정하고 `pnpm test:e2e --project=chromium e2e/performance.spec.ts`를 실행합니다.
+
+성능 측정과 브라우저별 검증 결과는 [Phase 7 품질 기록](docs/phase-7-quality.md)에 정리했습니다.
+
 ## 이후 단계
 
-Phase 7에서는 대용량 상호작용 성능과 패키지 품질을 점검합니다. 클립보드 붙여넣기는 npm 첫 배포 이후 단계의 범위입니다.
+Phase 8에서는 npm 첫 공개 배포를 준비합니다. 클립보드 붙여넣기는 npm 첫 배포 이후 단계의 범위입니다.
 
 [MIT](packages/react-data-grid/LICENSE)

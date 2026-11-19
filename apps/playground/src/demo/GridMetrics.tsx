@@ -1,3 +1,4 @@
+import { playgroundText, type Locale } from "../i18n";
 import { useEffect, useState, type RefObject } from "react";
 
 interface Metrics {
@@ -10,12 +11,15 @@ interface Metrics {
 }
 
 export function GridMetrics({
+  locale,
   demoRef,
   total,
 }: {
+  locale: Locale;
   demoRef: RefObject<HTMLDivElement | null>;
   total: number;
 }) {
+  const labels = playgroundText[locale].metrics;
   const [metrics, setMetrics] = useState<Metrics>();
 
   useEffect(() => {
@@ -82,29 +86,29 @@ export function GridMetrics({
   return (
     <dl className="mb-4 flex flex-wrap gap-x-6 gap-y-2 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm tabular-nums">
       <div>
-        <dt className="text-slate-600">Matching rows</dt>
+        <dt className="text-slate-600">{labels.matching}</dt>
         <dd className="font-semibold">
-          {metrics?.filtered.toLocaleString("en-US") ?? "?"}
+          {metrics?.filtered.toLocaleString(locale) ?? "?"}
         </dd>
       </div>
       <div>
-        <dt className="text-slate-600">Rendered rows</dt>
+        <dt className="text-slate-600">{labels.rendered}</dt>
         <dd className="font-semibold">{metrics?.rendered ?? "—"}</dd>
       </div>
       <div>
-        <dt className="text-slate-600">Visible rows</dt>
+        <dt className="text-slate-600">{labels.visible}</dt>
         <dd className="font-semibold">
           {metrics ? `${metrics.firstVisible}–${metrics.lastVisible}` : "—"}
         </dd>
       </div>
       <div>
-        <dt className="text-slate-600">Data viewport</dt>
+        <dt className="text-slate-600">{labels.viewport}</dt>
         <dd className="font-semibold">
           {metrics ? `${metrics.viewportHeight} px` : "—"}
         </dd>
       </div>
       <div>
-        <dt className="text-slate-600">Row height</dt>
+        <dt className="text-slate-600">{labels.rowHeight}</dt>
         <dd className="font-semibold">
           {metrics ? `${metrics.rowHeight} px` : "—"}
         </dd>

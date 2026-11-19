@@ -1,6 +1,6 @@
 import { getCellText } from "../core/cellValue";
 import type { ColumnPin } from "../types/grid";
-import type { ComponentProps, ReactNode } from "react";
+import { useMemo, type ComponentProps, type ReactNode } from "react";
 import type { ColumnDef } from "../types/grid";
 
 export function GridCell<T>({
@@ -21,7 +21,8 @@ export function GridCell<T>({
   offset?: number;
   boundary?: boolean;
 } & Pick<ComponentProps<"td">, "id" | "role" | "aria-selected" | "className">) {
-  const text = getCellText(row, column) ?? "\u2014";
+  const text =
+    useMemo(() => getCellText(row, column), [row, column]) ?? "\u2014";
 
   return (
     <td
