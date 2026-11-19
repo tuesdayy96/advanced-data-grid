@@ -1,9 +1,30 @@
 {
   "name": "@advanced-data-grid/react-data-grid",
   "version": "0.1.0",
-  "description": "A typed React data table with standalone styles.",
+  "description": "A typed React data grid with virtual scrolling, cell editing, sorting, filtering, and standalone CSS.",
   "license": "MIT",
   "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tuesdayy96/advanced-data-grid.git",
+    "directory": "packages/react-data-grid"
+  },
+  "homepage": "https://advanced-data-grid-ten.vercel.app/docs/en",
+  "bugs": {
+    "url": "https://github.com/tuesdayy96/advanced-data-grid/issues"
+  },
+  "keywords": [
+    "react",
+    "data-grid",
+    "typescript",
+    "virtualization",
+    "table"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",

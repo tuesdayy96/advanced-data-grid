@@ -11,6 +11,10 @@ test("navigates between the Playground and localized documentation", async ({
   await expect(
     page.getByRole("heading", { name: "Employee directory" }),
   ).toBeVisible();
+  await expect(page.getByRole("link", { name: "GitHub" })).toHaveAttribute(
+    "href",
+    "https://github.com/tuesdayy96/advanced-data-grid",
+  );
 
   const skipLink = page.getByRole("link", { name: "Skip to content" });
   // WebKit's default keyboard preferences omit links from plain Tab navigation.
@@ -44,7 +48,14 @@ test("navigates between the Playground and localized documentation", async ({
   );
   await expect(
     page.locator('link[rel="alternate"][hreflang="en"]'),
-  ).toHaveAttribute("href", /\/docs\/en\/installation$/);
+  ).toHaveAttribute(
+    "href",
+    "https://advanced-data-grid-ten.vercel.app/docs/en/installation",
+  );
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+    "href",
+    "https://advanced-data-grid-ten.vercel.app/docs/ko/installation",
+  );
 
   await page.goBack();
   await expect(page).toHaveURL(/\/docs\/en\/installation$/);

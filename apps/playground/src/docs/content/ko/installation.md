@@ -16,7 +16,13 @@ pnpm add ./advanced-data-grid-react-data-grid-0.1.0.tgz
 yarn add ./advanced-data-grid-react-data-grid-0.1.0.tgz
 ```
 
-Phase 7.5 검증 시 공개 레지스트리에서 현재 패키지명을 조회할 수 없었습니다. 스코프와 패키지명이 확정되고 공개 릴리스가 등록된 뒤 이름으로 설치할 수 있습니다.
+현재 0.1.0 공개 릴리스를 준비하고 있습니다. 공개 npm 레지스트리에 버전이 등록된 뒤에는 패키지명으로 설치할 수 있습니다.
+
+```sh
+npm install @advanced-data-grid/react-data-grid
+pnpm add @advanced-data-grid/react-data-grid
+yarn add @advanced-data-grid/react-data-grid
+```
 
 ## 실행 환경과 스타일시트
 

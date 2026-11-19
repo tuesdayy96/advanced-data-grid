@@ -16,7 +16,13 @@ pnpm add ./advanced-data-grid-react-data-grid-0.1.0.tgz
 yarn add ./advanced-data-grid-react-data-grid-0.1.0.tgz
 ```
 
-The public registry did not resolve the workspace package name during Phase 7.5. Install by name after the package scope, name, and release are confirmed and published.
+Version 0.1.0 is being prepared for public release. Once the version appears in the public npm registry, install it by name.
+
+```sh
+npm install @advanced-data-grid/react-data-grid
+pnpm add @advanced-data-grid/react-data-grid
+yarn add @advanced-data-grid/react-data-grid
+```
 
 ## Runtime and stylesheet
 

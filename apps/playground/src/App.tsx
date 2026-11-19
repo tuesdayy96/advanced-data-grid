@@ -6,6 +6,8 @@ import { PlaygroundPage } from "./PlaygroundPage";
 import "./site.css";
 
 const DocsPage = lazy(() => import("./docs/DocsPage"));
+const publicSite = "https://advanced-data-grid-ten.vercel.app";
+const repository = "https://github.com/tuesdayy96/advanced-data-grid";
 
 function Site() {
   const { pathname, search } = useLocation();
@@ -51,17 +53,30 @@ function Site() {
   }, [description, heading, locale, navigationKey, shouldFocus]);
 
   useEffect(() => {
-    if (!page) return;
-    const links = (["en", "ko"] as const).map((language) => {
-      const link = document.createElement("link");
-      link.rel = "alternate";
-      link.hreflang = language;
-      link.href = docPath(language, page.slug);
-      document.head.append(link);
-      return link;
-    });
-    return () => links.forEach((link) => link.remove());
-  }, [page]);
+    if (!page && !playground) return;
+    const canonical = document.createElement("link");
+    canonical.rel = "canonical";
+    canonical.href = new URL(
+      page ? docPath(locale, page.slug) : "/",
+      publicSite,
+    ).href;
+    document.head.append(canonical);
+
+    const links = page
+      ? (["en", "ko"] as const).map((language) => {
+          const link = document.createElement("link");
+          link.rel = "alternate";
+          link.hreflang = language;
+          link.href = new URL(docPath(language, page.slug), publicSite).href;
+          document.head.append(link);
+          return link;
+        })
+      : [];
+    return () => {
+      canonical.remove();
+      links.forEach((link) => link.remove());
+    };
+  }, [locale, page, playground]);
 
   if (path === "/docs") return <Navigate to={docPath("en")} replace />;
 
@@ -100,6 +115,7 @@ function Site() {
             >
               {korean ? "문서" : "Docs"}
             </Link>
+            <a href={repository}>GitHub</a>
           </nav>
           <nav
             className="site-languages"

@@ -5,3 +5,7 @@ coverage/
 *.tsbuildinfo
 playwright-report/
 test-results/
+.vercel/
+.env
+.env.*
+!.env.example
