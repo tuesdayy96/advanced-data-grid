@@ -54,7 +54,7 @@ Explore the [Playground](https://advanced-data-grid-ten.vercel.app/), [English d
 ## Compatibility and limitations
 
 - React and React DOM peer ranges are `^18.2.0 || ^19.0.0`. The package provides ESM, TypeScript declarations, and a `styles.css` export.
-- The Windows browser suite covers Chromium, Firefox, WebKit, and Edge. Native Safari and manual screen reader checks remain unverified. Windows Firefox axe checks are skipped because the engine crashes during evaluation.
+- The Windows browser suite covers Chromium, Firefox, WebKit, and Edge. Native Safari and manual screen reader checks remain unverified. The [Firefox axe regression report](docs/firefox-axe-ci-regression.md) explains the Playwright version pin.
 - Virtualization uses fixed-height rows. Clipboard support covers TSV copy. Paste and direct XLSX import are outside the public API. Large TSV copies can occupy the main thread during serialization.
 
 ## Development

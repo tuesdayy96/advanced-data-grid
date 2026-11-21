@@ -1,4 +1,3 @@
-import { platform } from "node:process";
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 import { pages, docPath } from "../apps/playground/src/docs/navigation";
@@ -180,12 +179,7 @@ test("highlights TSX and announces clipboard success or failure", async ({
 
 test("passes WCAG A/AA axe checks on documentation in both languages", async ({
   page,
-  browserName,
 }) => {
-  test.skip(
-    browserName === "firefox" && platform === "win32",
-    "Windows Firefox crashes during axe evaluation in this workspace.",
-  );
   for (const [path, width] of [
     ["/docs/en/quick-start", 1280],
     ["/docs/ko/api/columns", 360],

@@ -1,4 +1,3 @@
-import { platform } from "node:process";
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 
@@ -403,12 +402,7 @@ test("uses keyboard-only filter controls and restores trigger focus", async ({
 
 test("passes WCAG A/AA axe checks with an open filter and validation error", async ({
   page,
-  browserName,
 }) => {
-  test.skip(
-    browserName === "firefox" && platform === "win32",
-    "The Windows Playwright Firefox engine crashes during axe evaluation. The keyboard scenario runs separately.",
-  );
   await openInvalidFilter(page);
   const result = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
