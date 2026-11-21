@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.2
+
+### Patch Changes
+
+- fd7b169: Expose CSS custom properties for grid typography, surfaces, borders, selection, editing, filters, resize handles, and pinned columns. Apply themes through the existing `className` or an ancestor while preserving the default styles and fixed virtual row geometry.
+
 ## 0.1.1 (2026-11-19)
 
 - Updated the npm package README to show public installation commands and link to the live documentation.
