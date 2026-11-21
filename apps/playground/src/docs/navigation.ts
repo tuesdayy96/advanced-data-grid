@@ -133,6 +133,14 @@ export const pages = [
       ko: "범위를 복사하고 컬럼 너비와 고정을 설정합니다.",
     },
   },
+  {
+    slug: "guides/styling",
+    title: { en: "Styling & Theming", ko: "스타일과 테마" },
+    description: {
+      en: "Customize grid styles with CSS custom properties.",
+      ko: "CSS 사용자 정의 속성으로 그리드의 스타일을 바꿉니다.",
+    },
+  },
 ] as const;
 export type DocPage = (typeof pages)[number];
 export const docPath = (locale: Locale, slug = "") =>

@@ -57,6 +57,29 @@ Explore the [Playground](https://advanced-data-grid-ten.vercel.app/), [English d
 - The Windows browser suite covers Chromium, Firefox, WebKit, and Edge. Native Safari and manual screen reader checks remain unverified. The [Firefox axe regression report](docs/firefox-axe-ci-regression.md) explains the Playwright version pin.
 - Virtualization uses fixed-height rows. Clipboard support covers TSV copy. Paste and direct XLSX import are outside the public API. Large TSV copies can occupy the main thread during serialization.
 
+## Styling the grid
+
+Import `@advanced-data-grid/react-data-grid/styles.css` and set CSS custom properties on the grid's existing `className`. Use a wrapper for controls and error messages outside the scroll container.
+
+```tsx
+<div className="dark-grid">
+  <DataGrid columns={columns} rows={rows} rowKey="id" />
+</div>
+```
+
+```css
+.dark-grid {
+  --adg-background: #111827;
+  --adg-text-color: #f8fafc;
+  --adg-header-background: #1e293b;
+  --adg-header-text-color: #f8fafc;
+  --adg-selection-background: #1e40af;
+  --adg-active-border-color: #93c5fd;
+}
+```
+
+[Styling guide](https://advanced-data-grid-ten.vercel.app/docs/en/guides/styling) · [한국어 스타일 가이드](https://advanced-data-grid-ten.vercel.app/docs/ko/guides/styling)
+
 ## Development
 
 Use Node.js 22.18+ and pnpm 10.

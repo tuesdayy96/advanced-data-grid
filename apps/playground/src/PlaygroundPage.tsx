@@ -14,8 +14,14 @@ import {
   prepareEmployees,
   type Employee,
 } from "./demo/mockData";
+import "./demo/gridThemes.css";
 
 const sizes = [100, 1_000, 10_000, 100_000];
+const themes = {
+  default: { en: "Default", ko: "기본" },
+  dark: { en: "Dark", ko: "다크" },
+  custom: { en: "Custom", ko: "커스텀" },
+};
 const numberFormat = new Intl.NumberFormat("en-US");
 
 function createDemo(count: number) {
@@ -54,6 +60,7 @@ export function PlaygroundPage({ locale }: { locale: Locale }) {
   const demoColumns = locale === "ko" ? koreanColumns : columns;
   const [demo, setDemo] = useState(initialDemo);
   const [selectedSize, setSelectedSize] = useState(sizes[0]);
+  const [theme, setTheme] = useState<keyof typeof themes>("default");
   const [flags, setFlags] = useState(defaultGridFlags);
   const [search, setSearch] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -106,6 +113,22 @@ export function PlaygroundPage({ locale }: { locale: Locale }) {
           <h2 id="records-heading" className="text-lg font-semibold">
             {t.records}
           </h2>
+          <label className="flex items-center gap-2 text-sm text-slate-700">
+            {locale === "ko" ? "그리드 테마" : "Grid theme"}
+            <select
+              className="rounded-md border border-slate-300 bg-white px-2 py-1.5"
+              value={theme}
+              onChange={(event) =>
+                setTheme(event.currentTarget.value as keyof typeof themes)
+              }
+            >
+              {Object.entries(themes).map(([value, name]) => (
+                <option key={value} value={value}>
+                  {name[locale]}
+                </option>
+              ))}
+            </select>
+          </label>
           <label className="flex items-center gap-2 text-sm text-slate-700">
             {t.size}
             <select
@@ -214,7 +237,7 @@ export function PlaygroundPage({ locale }: { locale: Locale }) {
           demoRef={demoRef}
           total={demo.rows.length}
         />
-        <div ref={demoRef}>
+        <div ref={demoRef} className={`grid-theme-${theme}`}>
           <DataGrid
             key={demo.rows.length}
             aria-label={t.records}

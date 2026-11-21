@@ -285,6 +285,7 @@ test("resizes by pointer and keyboard without triggering sort", async ({
 }) => {
   const handle = grid(page).getByRole("button", { name: "Resize Name" });
   const col = grid(page).locator('th[title="Name"]');
+  await handle.scrollIntoViewIfNeeded();
   const point = await handle.boundingBox();
   expect(point).not.toBeNull();
   if (!point) return;
@@ -413,4 +414,159 @@ test("passes WCAG A/AA axe checks with an open filter and validation error", asy
       targets: nodes.map(({ target }) => target),
     })),
   ).toEqual([]);
+});
+
+for (const [theme, colors] of [
+  [
+    "default",
+    [
+      "#edf3f9",
+      "#d9e3ee",
+      "#18283b",
+      "#fff",
+      "#dbeafe",
+      "#2455b2",
+      "#fff",
+      "transparent",
+      "transparent",
+    ],
+  ],
+  [
+    "dark",
+    [
+      "#1e293b",
+      "#64748b",
+      "#f8fafc",
+      "#1e293b",
+      "#1e40af",
+      "#93c5fd",
+      "#0f172a",
+      "#1e293b",
+      "#450a0a",
+    ],
+  ],
+  [
+    "custom",
+    [
+      "#fef3c7",
+      "#a16207",
+      "#292524",
+      "#fef3c7",
+      "#f5ce74",
+      "#92400e",
+      "#fffaf0",
+      "#fef3c7",
+      "#fff1f2",
+    ],
+  ],
+] as const) {
+  test(`${theme} theme styles the grid and passes the open-filter audit`, async ({
+    page,
+  }) => {
+    const expected = colors.map((color) => {
+      if (color === "transparent") return "rgba(0, 0, 0, 0)";
+      const digits = color.slice(1);
+      const hex = digits.length === 3 ? digits.replace(/./g, "$&$&") : digits;
+      return `rgb(${[0, 2, 4].map((index) => parseInt(hex.slice(index, index + 2), 16)).join(", ")})`;
+    });
+    const [
+      header,
+      border,
+      text,
+      pinned,
+      selection,
+      focus,
+      editor,
+      panel,
+      error,
+    ] = expected;
+    await page.getByLabel("Grid theme").selectOption(theme);
+    await page
+      .getByRole("checkbox", { name: /Pin columns on both sides/ })
+      .check();
+    const root = page.locator(".adg-root");
+    await expect(grid(page).locator("thead th").first()).toHaveCSS(
+      "background-color",
+      header,
+    );
+    await expect(root).toHaveCSS("border-top-color", border);
+    await expect(cell(page, 0, 1)).toHaveCSS("color", text);
+    await expect(cell(page, 0, 0)).toHaveCSS("background-color", pinned);
+    await cell(page, 0, 1).click();
+    await expect(cell(page, 0, 1)).toHaveCSS("background-color", selection);
+    await expect(cell(page, 0, 1)).toHaveCSS(
+      "box-shadow",
+      new RegExp(focus.replaceAll(/[()]/g, "\\$&")),
+    );
+    await page.keyboard.press("F2");
+    const editorInput = page.locator(".adg-editor");
+    await expect(editorInput).toHaveCSS("background-color", editor);
+    await expect(editorInput).toHaveCSS("color", text);
+    await editorInput.fill("Themed employee");
+    await editorInput.press("Enter");
+    await expect(cell(page, 0, 1)).toHaveText("Themed employee");
+    await openInvalidFilter(page);
+    const filterPanel = page.getByRole("region", { name: "Filter Name" });
+    await expect(filterPanel).toHaveCSS("background-color", panel);
+    await expect(filterPanel.getByRole("alert")).toHaveCSS(
+      "background-color",
+      error,
+    );
+    if (theme !== "default") {
+      await expect(filterPanel.getByLabel("Value")).toHaveCSS(
+        "outline-color",
+        focus,
+      );
+    }
+    const result = await new AxeBuilder({ page })
+      .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+      .analyze();
+    expect(
+      result.violations.map(({ id, nodes }) => ({
+        id,
+        targets: nodes.map(({ target }) => target),
+      })),
+    ).toEqual([]);
+  });
+}
+
+test("switches themes without losing grid state or fixed row geometry", async ({
+  page,
+}) => {
+  const theme = page.getByLabel("Grid theme");
+  await sort(page, "Name").click();
+  await applyFilter(page, "Name", "contains", "a");
+  const header = grid(page).locator('th[title="Name"]');
+  const resize = header.locator(".adg-resize-handle");
+  await resize.focus();
+  await page.keyboard.press("ArrowRight");
+  const width = await header.evaluate(
+    (element) => element.getBoundingClientRect().width,
+  );
+  await cell(page, 0, 1).click();
+  const table = await grid(page).elementHandle();
+  await theme.selectOption("dark");
+  expect(await table?.evaluate((element) => element.isConnected)).toBe(true);
+  await expect(header).toHaveAttribute("aria-sort", "ascending");
+  await expect(filter(page, "Name")).toHaveAttribute("data-filtered", "true");
+  await expectActive(page, 0, 1);
+  await expect(cell(page, 0, 1)).toHaveAttribute("aria-selected", "true");
+  expect(
+    await header.evaluate((element) => element.getBoundingClientRect().width),
+  ).toBe(width);
+  await page.addStyleTag({
+    content:
+      ".my-grid { --adg-font-size: 2rem; --adg-cell-padding-inline: 0.25rem; --adg-header-background: #118899; }",
+  });
+  await page
+    .locator(".adg-root")
+    .evaluate((element) => element.classList.add("my-grid"));
+  await expect(header).toHaveCSS("background-color", "rgb(17, 136, 153)");
+  await expect(cell(page, 0, 1)).toHaveCSS("padding-left", "4px");
+  await expect(cell(page, 0, 1)).toHaveCSS("height", "40px");
+  await expect(header).toHaveCSS("height", "44px");
+  await grid(page).focus();
+  await page.keyboard.press("F2");
+  await expect(page.locator(".adg-editor")).toBeFocused();
+  await page.keyboard.press("Escape");
 });
