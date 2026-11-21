@@ -75,6 +75,8 @@ pnpm test:e2e
 
 Playwright runs against Vite preview by default. Set `ADG_E2E_DEV=1` for the dev server or `ADG_E2E_EDGE=1` to include installed Microsoft Edge. For performance and heap samples, set `ADG_PERF=1` and run `pnpm test:e2e --project=chromium e2e/performance.spec.ts`.
 
+Run `pnpm changeset` for user-facing library changes and include the resulting file in your PR. GitHub Actions runs the same checks on PRs to `main`. See the [release workflow](docs/release-workflow.md) for version PRs, publishing, and recovery.
+
 ## Deployment
 
 Vercel serves Playground and both documentation languages as one Vite project. Set Root Directory to `apps/playground`, allow workspace sources outside it, and select Node.js 24.x to match the local release checks. Leave the install command on automatic so Vercel detects pnpm from the workspace lockfile. The app build command builds the library first and writes the site to `apps/playground/dist`. The SPA rewrite handles direct requests under `/docs`. [Vercel configuration](apps/playground/vercel.json)
